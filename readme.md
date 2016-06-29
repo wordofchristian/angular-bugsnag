@@ -125,6 +125,37 @@ angular.module('demo-app', ['angular-bugsnag'])
     }]);
 ```
 
+### Automatically catching $http response errors
+
+If you want to track new HTTP response errors. This can be automatically handled with a response interceptor.
+
+```javascript
+angular.module('myApp').config(['$httpProvider', function($httpProvider) {
+
+    var interceptor = ['$q', 'bugsnag', function ($q, bugsnag) {
+        function success(response) {
+            return response;
+        }
+
+        function error(response) {
+            var status = response.status;
+
+            if (status != 400) { // skip notification for input validation errors
+                bugsnag.notify(response.statusText, response.config.url.url,  {response: response})
+            }
+            
+            return $q.reject(response);
+        }
+
+        return function (promise) {
+            return promise.then(success, error);
+        }
+    }];
+
+    $httpProvider.responseInterceptors.push(interceptor);
+}])
+```
+
 ## Contributing
 
 PR's are welcome.  Just make sure the tests pass.
